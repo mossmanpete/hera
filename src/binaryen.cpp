@@ -49,9 +49,9 @@ public:
   { }
 
 protected:
-  wasm::Literal callImport(wasm::Import *import, wasm::LiteralList& arguments) override;
+  wasm::Literal callImport(wasm::Function* import, wasm::LiteralList& arguments) override;
 #if HERA_DEBUGGING
-  wasm::Literal callDebugImport(wasm::Import *import, wasm::LiteralList& arguments);
+  wasm::Literal callDebugImport(wasm::Function* import, wasm::LiteralList& arguments);
 #endif
 
   void importGlobals(map<wasm::Name, wasm::Literal>& globals, wasm::Module& wasm) override;
@@ -73,7 +73,7 @@ private:
   }
 
 #if HERA_DEBUGGING
-  wasm::Literal BinaryenEthereumInterface::callDebugImport(wasm::Import *import, wasm::LiteralList& arguments) {
+  wasm::Literal BinaryenEthereumInterface::callDebugImport(wasm::Function *import, wasm::LiteralList& arguments) {
     heraAssert(import->module == wasm::Name("debug"), "Import namespace error.");
 
     if (import->base == wasm::Name("print32")) {
@@ -134,7 +134,7 @@ private:
   }
 #endif
 
-  wasm::Literal BinaryenEthereumInterface::callImport(wasm::Import *import, wasm::LiteralList& arguments) {
+  wasm::Literal BinaryenEthereumInterface::callImport(wasm::Function* import, wasm::LiteralList& arguments) {
 #if HERA_DEBUGGING
     if (import->module == wasm::Name("debug"))
       // Reroute to debug namespace
@@ -622,7 +622,7 @@ void BinaryenEngine::verifyContract(wasm::Module & module)
     { wasm::Name("selfDestruct"), createFunctionType({ wasm::Type::i32 }, wasm::Type::none) }
   };
 
-  for (auto const& import: module.imports) {
+  for (auto const& import: module.functions) {
     ensureCondition(
       import->module == wasm::Name("ethereum")
 #if HERA_DEBUGGING
@@ -644,7 +644,7 @@ void BinaryenEngine::verifyContract(wasm::Module & module)
       "Importing invalid EEI method."
     );
 
-    wasm::FunctionType* function_type = module.getFunctionTypeOrNull(import->functionType);
+    wasm::FunctionType* function_type = module.getFunctionTypeOrNull(import->type);
     ensureCondition(
       function_type,
       ContractValidationFailure,
